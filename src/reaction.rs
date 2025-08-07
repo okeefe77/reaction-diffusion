@@ -90,8 +90,7 @@ impl Reaction {
         let mut new_grid: Vec<RDCell> = Vec::new();
 
         for (idx, cell) in self.grid.data.iter().enumerate() {
-            let x = idx as u32 % self.grid.width;
-            let y = idx as u32 / self.grid.width;
+            let (x, y) = self.idx_to_coords(idx);
 
             if let Ok((lap_a, lap_b)) = self.grid.convolve_cell(x, y) {
                 let new_a = cell.a + (
@@ -115,14 +114,40 @@ impl Reaction {
         self.grid.data = new_grid;
     }
 
-    pub fn seed(&mut self, x: u32, y: u32) {
-        let a = self.grid.get_cell(x, y).unwrap().a;
-        self.grid.set_cell(x, y, a, 1.0);
+    pub fn seed(&mut self, x: u32, y: u32, radius: u32) {
+        let x = x as i64;
+        let y = y as i64;
+        let radius = radius as i64;
+        let r_sqr = radius.pow(2);
+
+        for row in (y - radius)..(y + radius) {
+            for col in (x - radius)..(x + radius) {
+                let dist = (col - x).pow(2) + (row - y).pow(2);
+
+                if dist.abs() <= r_sqr {
+                    let cell_x = col as u32;
+                    let cell_y = row as u32;
+                    if let Some(cell) = self.grid.get_cell(cell_x, cell_y) {
+                        self.grid.set_cell(cell_x, cell_y, cell.a, 1.0);
+                    }
+                }
+            }
+        }
     }
 
     pub fn sample_cell(&self, x: u32, y: u32) -> (f32, f32) {
         let c = self.grid.get_cell(x, y).unwrap();
         (c.a, c.b)
+    }
+
+    pub fn grid_data(&self) -> impl Iterator<Item = ((u32, u32), f32)> {
+        self.grid.data.iter().enumerate().map(|(idx, cell)| (self.idx_to_coords(idx), cell.b))
+    }
+
+    fn idx_to_coords(&self, idx: usize) -> (u32, u32) {
+        let x = idx as u32 % self.grid.width;
+        let y = idx as u32 / self.grid.width;
+        (x, y)
     }
 }
 
