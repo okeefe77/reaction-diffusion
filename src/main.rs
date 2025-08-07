@@ -1,26 +1,23 @@
-struct RDCell {
-    a: f32,
-    b: f32
-}
+mod reaction;
 
-struct RDGrid {
-    data: Vec<RDCell>,
-    width: u32,
-    height: u32
-}
+use crate::reaction::Reaction;
 
-struct Reaction {
-    grid: RDGrid,
-    a_rate: f32,
-    b_rate: f32,
-    feed: f32,
-    kill: f32
-}
-
+#[allow(dead_code)]
 struct Model {
     reaction: Reaction
 }
 
+
+
+
 fn main() {
-    println!("Hello, world!");
+    unsafe { std::env::set_var("RUST_BACKTRACE", "1"); }
+    let mut r = Reaction::new(400, 300, 1.0, 0.5, 0.055, 0.062);
+
+    println!("Before: {:?}", r.sample_cell(199, 150));
+
+    r.seed(200, 150);
+    r.step();
+    
+    println!("After: {:?}", r.sample_cell(199, 150));
 }
